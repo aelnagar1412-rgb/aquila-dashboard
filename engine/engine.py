@@ -5,7 +5,12 @@ from datetime import datetime, timedelta
 import pytz
 
 from telegram import send_message
-from telegram_control import load_settings
+from strategy import (
+    rsi_ema_strategy,
+    trend_pullback_strategy,
+    breakout_strategy
+)
+from ai_engine import ai_decision
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 SETTINGS_FILE = os.path.join(BASE_DIR, "settings.json")
@@ -19,7 +24,11 @@ def calc_expiry(start_time, timeframe):
     minutes = int(timeframe.replace("m", ""))
     return start_time + timedelta(minutes=minutes)
 
-print("🚀 Aquila Engine Started")
+def load_settings():
+    with open(SETTINGS_FILE, "r") as f:
+        return json.load(f)
+
+print("🚀 Aquila AI Engine Started")
 
 last_sent = {}
 
@@ -27,7 +36,6 @@ while True:
     settings = load_settings()
 
     if not settings.get("enabled", False):
-        print("⏸ Bot Disabled - waiting...")
         time.sleep(5)
         continue
 
@@ -36,31 +44,52 @@ while True:
 
     for pair in pairs:
         now = egypt_now()
-
-        # منع تكرار الإشارة لنفس الزوج خلال نفس الدقيقة
         key = f"{pair}_{now.strftime('%Y%m%d%H%M')}"
         if key in last_sent:
             continue
-        last_sent[key] = True
 
-        direction = "CALL ⬆️" if now.second % 2 == 0 else "PUT ⬇️"
+        # ===== بيانات وهمية (بدلها ببيانات حقيقية لاحقًا) =====
+        rsi = 28
+        price = 1.1000
+        ema20 = 1.0995
+        ema50 = 1.0980
+        candle = "green"
+        high10 = 1.1010
+        low10 = 1.0950
+        volume = 120
+        avg_volume = 100
+        # =======================================================
 
-        entry_time = now
-        expiry_time = calc_expiry(entry_time, timeframe)
+        s1 = rsi_ema_strategy(rsi, price, ema50, candle)
+        s2 = trend_pullback_strategy(ema20, ema50, rsi)
+        s3 = breakout_strategy(price, high10, low10, rsi, volume, avg_volume)
 
-        message = (
-            "🚨 إشارة تداول مؤكدة\n\n"
-            f"📊 الزوج: {pair}\n"
-            f"⏱ الفريم: {timeframe}\n"
-            f"🎯 نوع الصفقة: {direction}\n\n"
-            f"🕒 وقت الدخول: {entry_time.strftime('%I:%M:%S %p')} 🇪🇬\n"
-            f"⏳ انتهاء الصفقة: {expiry_time.strftime('%I:%M:%S %p')} 🇪🇬\n\n"
-            "⚠️ التزم بإدارة رأس المال\n"
-            "🤖 Aquila AI Trader"
-        )
+        signals = [s1, s2, s3]
+        decision, strength = ai_decision(signals)
 
-        send_message(message)
-        print(f"✅ Signal sent for {pair}")
+        if decision and strength >= 66:
+            entry_time = now
+            expiry_time = calc_expiry(entry_time, timeframe)
+
+            message = (
+                "🚨 إشارة تداول AI قوية\n\n"
+                f"📊 الزوج: {pair}\n"
+                f"⏱ الفريم: {timeframe}\n"
+                f"🎯 الصفقة: {decision}\n\n"
+                "🧠 AI Analysis:\n"
+                f"• RSI + EMA {'✅' if s1 else '❌'}\n"
+                f"• Trend Pullback {'✅' if s2 else '❌'}\n"
+                f"• Breakout {'✅' if s3 else '❌'}\n\n"
+                f"🔥 قوة الإشارة: {strength}%\n\n"
+                f"🕒 الدخول: {entry_time.strftime('%I:%M:%S %p')} 🇪🇬\n"
+                f"⏳ الانتهاء: {expiry_time.strftime('%I:%M:%S %p')} 🇪🇬\n\n"
+                "⚠️ التزم بإدارة رأس المال\n"
+                "🤖 Aquila AI Trader"
+            )
+
+            send_message(message)
+            last_sent[key] = True
+            print(f"✅ Signal sent for {pair}")
 
         time.sleep(2)
 
