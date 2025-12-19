@@ -1,10 +1,13 @@
 import time
 import json
 import random
+from datetime import datetime
 
 SETTINGS_FILE = "../settings.json"
+
 COOLDOWN_SECONDS = 180
 TREND_THRESHOLD = 0.15
+MIN_VOLATILITY = 0.05  # minimum candle range
 
 last_signal_time = {}
 
@@ -18,34 +21,51 @@ def send_signal(pair, timeframe, direction):
 def market_is_trending(ema50, ema200):
     return abs(ema50 - ema200) >= TREND_THRESHOLD
 
-def candle_confirm(direction, open_price, close_price):
-    if direction == "CALL" and close_price > open_price:
+def candle_confirm(direction, open_p, close_p):
+    if direction == "CALL" and close_p > open_p:
         return True
-    if direction == "PUT" and close_price < open_price:
+    if direction == "PUT" and close_p < open_p:
         return True
     return False
 
+def session_allowed():
+    utc_hour = datetime.utcnow().hour
+    return (8 <= utc_hour <= 17) or (13 <= utc_hour <= 22)
+
+def volatility_ok(high, low):
+    return abs(high - low) >= MIN_VOLATILITY
+
 def calculate_signal(pair):
-    # Indicators (simulation)
+    # --- Simulated indicators (replace with real feed later) ---
     ema_50 = random.uniform(1.0, 2.0)
     ema_200 = random.uniform(1.0, 2.0)
     rsi = random.randint(30, 70)
 
-    candle_open = random.uniform(1.0, 2.0)
-    candle_close = random.uniform(1.0, 2.0)
+    open_p = random.uniform(1.0, 2.0)
+    close_p = random.uniform(1.0, 2.0)
+    high = max(open_p, close_p) + random.uniform(0.0, 0.1)
+    low = min(open_p, close_p) - random.uniform(0.0, 0.1)
 
-    # ❌ No trend
+    # Session filter
+    if not session_allowed():
+        return None
+
+    # Volatility filter
+    if not volatility_ok(high, low):
+        return None
+
+    # Trend filter
     if not market_is_trending(ema_50, ema_200):
         return None
 
-    # 🔵 CALL
+    # CALL
     if ema_50 > ema_200 and 40 <= rsi <= 55:
-        if candle_confirm("CALL", candle_open, candle_close):
+        if candle_confirm("CALL", open_p, close_p):
             return "CALL"
 
-    # 🔴 PUT
+    # PUT
     if ema_50 < ema_200 and 45 <= rsi <= 60:
-        if candle_confirm("PUT", candle_open, candle_close):
+        if candle_confirm("PUT", open_p, close_p):
             return "PUT"
 
     return None
