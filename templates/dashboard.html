@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Aquila Dashboard</title>
+</head>
+<body>
+    <h2>Aquila AI Trader – Dashboard</h2>
+
+    <form method="post">
+        <label>
+            <input type="checkbox" name="enabled" {% if enabled %}checked{% endif %}>
+            Bot Enabled
+        </label>
+        <br><br>
+
+        <label>Timeframe:</label>
+        <input type="text" name="timeframe" value="{{ timeframe }}">
+        <br><br>
+
+        <label>Pairs (comma separated):</label><br>
+        <input type="text" name="pairs" style="width:300px" value="{{ pairs }}">
+        <br><br>
+
+        <button type="submit">Save Settings</button>
+    </form>
+</body>
+</html>
