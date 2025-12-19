@@ -3,8 +3,8 @@ import json
 import random
 
 SETTINGS_FILE = "../settings.json"
-COOLDOWN_SECONDS = 180  # 3 minutes
-TREND_THRESHOLD = 0.15  # Trend strength filter
+COOLDOWN_SECONDS = 180
+TREND_THRESHOLD = 0.15
 
 last_signal_time = {}
 
@@ -18,27 +18,35 @@ def send_signal(pair, timeframe, direction):
 def market_is_trending(ema50, ema200):
     return abs(ema50 - ema200) >= TREND_THRESHOLD
 
-def calculate_signal(pair):
-    """
-    Strategy:
-    - EMA 50 vs EMA 200 (Trend)
-    - RSI pullback
-    """
+def candle_confirm(direction, open_price, close_price):
+    if direction == "CALL" and close_price > open_price:
+        return True
+    if direction == "PUT" and close_price < open_price:
+        return True
+    return False
 
+def calculate_signal(pair):
+    # Indicators (simulation)
     ema_50 = random.uniform(1.0, 2.0)
     ema_200 = random.uniform(1.0, 2.0)
     rsi = random.randint(30, 70)
 
-    # ❌ No trend → no trade
+    candle_open = random.uniform(1.0, 2.0)
+    candle_close = random.uniform(1.0, 2.0)
+
+    # ❌ No trend
     if not market_is_trending(ema_50, ema_200):
         return None
 
-    # ✅ Trend + Pullback
+    # 🔵 CALL
     if ema_50 > ema_200 and 40 <= rsi <= 55:
-        return "CALL"
+        if candle_confirm("CALL", candle_open, candle_close):
+            return "CALL"
 
+    # 🔴 PUT
     if ema_50 < ema_200 and 45 <= rsi <= 60:
-        return "PUT"
+        if candle_confirm("PUT", candle_open, candle_close):
+            return "PUT"
 
     return None
 
@@ -63,7 +71,6 @@ while True:
 
     for pair in pairs:
         last_time = last_signal_time.get(pair, 0)
-
         if now - last_time < COOLDOWN_SECONDS:
             continue
 
