@@ -1,16 +1,24 @@
 import time
 import json
 import random
+import requests
 from datetime import datetime, timedelta
 
+# ================== TELEGRAM ==================
+BOT_TOKEN = "8570409684:AAEQBhKv0zMZaEXWcoCUGiJsKRspE5JuleM"
+CHAT_ID = "818760257"
+
+# ================== FILES ==================
 SETTINGS_FILE = "../settings.json"
 
+# ================== ENGINE SETTINGS ==================
 COOLDOWN_SECONDS = 180
 TREND_THRESHOLD = 0.15
 MIN_VOLATILITY = 0.05
 
 last_signal_time = {}
 
+# ================== HELPERS ==================
 def load_settings():
     with open(SETTINGS_FILE, "r") as f:
         return json.load(f)
@@ -32,10 +40,32 @@ def session_allowed():
 def volatility_ok(high, low):
     return abs(high - low) >= MIN_VOLATILITY
 
-def send_signal(pair, timeframe, direction):
-    # 🇪🇬 توقيت مصر (UTC + 2)
+# ================== TELEGRAM ==================
+def send_telegram(message):
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    payload = {
+        "chat_id": CHAT_ID,
+        "text": message
+    }
+    requests.post(url, json=payload)
+
+# ================== SIGNAL ==================
+def send_signal(pair, timeframe, signal):
     egypt_time = datetime.utcnow() + timedelta(hours=2)
-    expiry = egypt_time + timedelta(minutes=1)
+
+    if timeframe == "1m":
+        expiry = egypt_time + timedelta(minutes=1)
+    elif timeframe == "3m":
+        expiry = egypt_time + timedelta(minutes=3)
+    elif timeframe == "5m":
+        expiry = egypt_time + timedelta(minutes=5)
+    else:
+        expiry = egypt_time + timedelta(minutes=1)
+
+    direction = signal["direction"]
+    rsi = signal["rsi"]
+    ema50 = signal["ema50"]
+    ema200 = signal["ema200"]
 
     message = f"""
 📊 إشارة تداول (Pocket Option)
@@ -44,15 +74,23 @@ def send_signal(pair, timeframe, direction):
 ⏱ الفريم: {timeframe}
 📈 الاتجاه: {'صعود' if direction == 'CALL' else 'هبوط'}
 
+🧠 سبب الدخول:
+• RSI = {rsi}
+• EMA50 = {ema50}
+• EMA200 = {ema200}
+• ترند واضح + شمعة تأكيد
+
 🕒 وقت الدخول: {egypt_time.strftime('%H:%M:%S')} 🇪🇬
 ⏳ انتهاء الصفقة: {expiry.strftime('%H:%M:%S')} 🇪🇬
 """
-    print(message)
 
+    send_telegram(message)
+
+# ================== STRATEGY ==================
 def calculate_signal(pair):
-    # --- Simulated indicators ---
-    ema_50 = random.uniform(1.0, 2.0)
-    ema_200 = random.uniform(1.0, 2.0)
+    # --- Simulated indicators (replace later with real data) ---
+    ema50 = random.uniform(1.0, 2.0)
+    ema200 = random.uniform(1.0, 2.0)
     rsi = random.randint(30, 70)
 
     open_p = random.uniform(1.0, 2.0)
@@ -66,35 +104,42 @@ def calculate_signal(pair):
     if not volatility_ok(high, low):
         return None
 
-    if not market_is_trending(ema_50, ema_200):
+    if not market_is_trending(ema50, ema200):
         return None
 
-    if ema_50 > ema_200 and 40 <= rsi <= 55:
+    if ema50 > ema200 and 40 <= rsi <= 55:
         if candle_confirm("CALL", open_p, close_p):
-            return "CALL"
+            return {
+                "direction": "CALL",
+                "rsi": rsi,
+                "ema50": round(ema50, 4),
+                "ema200": round(ema200, 4)
+            }
 
-    if ema_50 < ema_200 and 45 <= rsi <= 60:
+    if ema50 < ema200 and 45 <= rsi <= 60:
         if candle_confirm("PUT", open_p, close_p):
-            return "PUT"
+            return {
+                "direction": "PUT",
+                "rsi": rsi,
+                "ema50": round(ema50, 4),
+                "ema200": round(ema200, 4)
+            }
 
     return None
 
+# ================== MAIN LOOP ==================
 print("🚀 Aquila Engine Started")
 
 while True:
     settings = load_settings()
 
     if not settings.get("enabled"):
-        print("⏸ Bot Disabled - waiting...")
+        print("⏸ Bot Disabled")
         time.sleep(5)
         continue
 
     timeframe = settings.get("timeframe", "1m")
     pairs = settings.get("pairs", [])
-
-    print("✅ Bot Enabled")
-    print("⏱ Timeframe:", timeframe)
-    print("💱 Pairs:", pairs)
 
     now = time.time()
 
