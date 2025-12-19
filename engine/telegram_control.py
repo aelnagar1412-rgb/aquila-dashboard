@@ -1,7 +1,8 @@
 import json
 import os
 
-SETTINGS_FILE = os.path.join(os.path.dirname(__file__), "settings.json")
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+SETTINGS_FILE = os.path.join(BASE_DIR, "settings.json")
 
 def load_settings():
     with open(SETTINGS_FILE, "r") as f:
