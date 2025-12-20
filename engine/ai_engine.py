@@ -1,10 +1,20 @@
-def ai_decision(signals):
-    calls = signals.count("CALL")
-    puts = signals.count("PUT")
+def ai_decision(trend, momentum, volatility):
+    score = 0
 
-    if calls >= 2:
-        return "CALL", calls * 33
-    if puts >= 2:
-        return "PUT", puts * 33
+    if trend == "UP":
+        score += 40
+    elif trend == "DOWN":
+        score += 40
 
-    return None, 0
+    if momentum == "STRONG":
+        score += 35
+
+    if volatility == "NORMAL":
+        score += 25
+
+    confidence = min(score, 100)
+
+    if confidence >= 75:
+        return True, confidence
+    else:
+        return False, confidence
