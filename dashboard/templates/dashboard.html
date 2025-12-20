@@ -1,22 +1,138 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Aquila Dashboard</title>
+    <meta charset="UTF-8">
+    <title>Aquila AI Trader Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background: #1e1e2f;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .container {
+            padding: 20px;
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,.1);
+        }
+
+        .status-on {
+            color: green;
+            font-weight: bold;
+        }
+
+        .status-off {
+            color: red;
+            font-weight: bold;
+        }
+
+        button {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        .btn-start { background: #28a745; color: white; }
+        .btn-stop { background: #dc3545; color: white; }
+        .btn-save { background: #007bff; color: white; }
+        .btn-logout { background: #6c757d; color: white; }
+
+        .pairs label {
+            display: inline-block;
+            margin-right: 15px;
+        }
+    </style>
 </head>
 <body>
 
-<h2>🤖 Aquila AI Trader – Control Panel</h2>
+<header>
+    <h2>🤖 Aquila AI Trader</h2>
+    <a href="/logout"><button class="btn-logout">Logout</button></a>
+</header>
 
-<p>Status:
-<b>{{ "🟢 ON" if settings.enabled else "🔴 OFF" }}</b>
-</p>
+<div class="container">
 
-<p>Timeframe: {{ settings.timeframe }}</p>
-<p>Pairs: {{ settings.pairs }}</p>
+    <!-- Bot Status -->
+    <div class="card">
+        <h3>Bot Status</h3>
+        <p>
+            Status:
+            {% if enabled %}
+                <span class="status-on">● ON</span>
+            {% else %}
+                <span class="status-off">● OFF</span>
+            {% endif %}
+        </p>
 
-<a href="/start"><button>▶️ Start Bot</button></a>
-<a href="/stop"><button>⛔ Stop Bot</button></a>
-<a href="/logout"><button>Logout</button></a>
+        <form method="POST" action="/toggle">
+            {% if enabled %}
+                <button class="btn-stop">Stop Bot</button>
+            {% else %}
+                <button class="btn-start">Start Bot</button>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Settings -->
+    <div class="card">
+        <h3>Trading Settings</h3>
+
+        <form method="POST" action="/save">
+
+            <label>Timeframe</label><br>
+            <select name="timeframe">
+                {% for tf in ["1m","3m","5m"] %}
+                <option value="{{tf}}" {% if timeframe==tf %}selected{% endif %}>
+                    {{tf}}
+                </option>
+                {% endfor %}
+            </select>
+
+            <hr>
+
+            <label>Pairs</label><br>
+            <div class="pairs">
+                {% for pair in all_pairs %}
+                <label>
+                    <input type="checkbox" name="pairs" value="{{pair}}"
+                    {% if pair in pairs %}checked{% endif %}>
+                    {{pair}}
+                </label>
+                {% endfor %}
+            </div>
+
+            <br><br>
+            <button class="btn-save">Save Settings</button>
+        </form>
+    </div>
+
+    <!-- Info -->
+    <div class="card">
+        <h3>System Info</h3>
+        <p>Server Time (Egypt 🇪🇬): {{ now }}</p>
+    </div>
+
+</div>
 
 </body>
 </html>
