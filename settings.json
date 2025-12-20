@@ -1,5 +1,7 @@
 {
   "enabled": false,
   "timeframe": "1m",
-  "pairs": ["EURUSD", "EURJPY", "EURGBP", "AUDCAD", "USDJPY"]
+  "pairs": ["EURUSD", "EURJPY", "EURGBP", "AUDCAD", "USDJPY"],
+  "auto_mode": false,
+  "language": "ar"
 }
