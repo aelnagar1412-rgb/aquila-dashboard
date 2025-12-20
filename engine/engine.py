@@ -1,29 +1,37 @@
 import json
 import time
-import os
+from strategy import analyze
+from ai_engine import ai_decision
 
 SETTINGS_FILE = "/root/aquila-dashboard/settings.json"
 
 def load_settings():
-    with open(SETTINGS_FILE, "r") as f:
+    with open(SETTINGS_FILE) as f:
         return json.load(f)
 
-print("🚀 Aquila Engine Started")
+print("🚀 Aquila AI Engine Running")
 
 while True:
-    settings = load_settings()
+    s = load_settings()
 
-    if not settings["enabled"]:
-        print("⏸ Bot Disabled - waiting...")
+    if not s["enabled"]:
         time.sleep(5)
         continue
 
-    tf = settings["timeframe"]
-    pairs = settings["pairs"]
+    for pair in s["pairs"]:
+        data = analyze(pair, s["timeframe"], s["risk"])
+        if not data:
+            continue
 
-    print("✅ Bot Enabled")
-    print("⏱ Timeframe:", tf)
-    print("💱 Pairs:", pairs)
+        decision = ai_decision(data)
+        if decision:
+            print(f"""
+📢 AI SIGNAL
+💱 {decision['pair']}
+⏱ {decision['timeframe']}
+📊 RSI: {decision['rsi']}
+🚀 {decision['direction']}
+🕒 {decision['time']} 🇪🇬
+""")
 
-    # هنا لاحقًا هنحط الاستراتيجية
     time.sleep(60)
