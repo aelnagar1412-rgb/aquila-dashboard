@@ -3,10 +3,10 @@ Description=Aquila Dashboard
 After=network.target
 
 [Service]
-User=root
 WorkingDirectory=/root/aquila-dashboard/dashboard
 ExecStart=/usr/bin/python3 app.py
 Restart=always
+User=root
 
 [Install]
 WantedBy=multi-user.target
