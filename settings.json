@@ -1,5 +1,7 @@
 {
-  "enabled": false,
+  "enabled": true,
   "timeframe": "1m",
-  "pairs": ["EURUSD", "EURJPY", "EURGBP", "AUDCAD", "USDJPY"]
+  "pairs": ["EURUSD", "EURJPY", "EURGBP", "AUDCAD", "USDJPY"],
+  "strategy": "AI_TREND_RSI",
+  "risk": "medium"
 }
