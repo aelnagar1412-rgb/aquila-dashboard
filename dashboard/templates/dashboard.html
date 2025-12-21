@@ -3,54 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <title>Aquila AI Dashboard</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
-<div class="container">
+<header>
     <h1>🦅 Aquila AI Dashboard</h1>
+    <p>🕒 {{ time }}</p>
+    <a href="/logout">Logout</a>
+</header>
 
-    <div class="card time">
-        ⏰ الوقت (مصر): <strong>{{ time }}</strong>
-    </div>
-
-    <div class="card status {{ 'on' if status else 'off' }}">
-        🤖 حالة البوت:
-        {% if status %}
-            <span>ON</span>
-        {% else %}
-            <span>OFF</span>
-        {% endif %}
+<div class="cards">
+    <div class="card">
+        <h3>Status</h3>
+        <p class="{{ 'on' if status else 'off' }}">
+            {{ 'ON' if status else 'OFF' }}
+        </p>
     </div>
 
     <div class="card">
-        ⏱ الفريم الزمني: <strong>{{ timeframe }}</strong>
+        <h3>Timeframe</h3>
+        <p>{{ timeframe }}</p>
     </div>
 
     <div class="card">
-        💱 الأزواج:
-        <ul>
-            {% for pair in pairs %}
-                <li>{{ pair }}</li>
-            {% endfor %}
-        </ul>
-    </div>
-
-    <div class="card signal">
-        📊 آخر إشارة:
-        {% if signal %}
-            <strong>{{ signal }}</strong>
-        {% else %}
-            لا توجد إشارة حالياً ❌
-        {% endif %}
-    </div>
-
-    <div class="actions">
-        <a href="/start" class="btn start">▶ Start Bot</a>
-        <a href="/stop" class="btn stop">⛔ Stop Bot</a>
-        <a href="/logout" class="btn logout">🚪 Logout</a>
+        <h3>Pairs</h3>
+        <p>{{ pairs | join(", ") }}</p>
     </div>
 </div>
+
+<h2>📊 Latest Signals</h2>
+
+{% if signals %}
+<table>
+    <tr>
+        <th>Pair</th>
+        <th>Direction</th>
+        <th>Time</th>
+    </tr>
+    {% for s in signals %}
+    <tr>
+        <td>{{ s.pair }}</td>
+        <td>{{ s.direction }}</td>
+        <td>{{ s.time }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p>❌ لا توجد إشارات حالياً</p>
+{% endif %}
 
 </body>
 </html>
