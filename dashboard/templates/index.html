@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Aquila AI Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="container">
+    <h1>🦅 Aquila AI Dashboard</h1>
+
+    <div class="status">
+        Status: <span class="on">● {{ data.status }}</span>
+    </div>
+
+    <div class="info">
+        <p>⏱ Timeframe: {{ data.timeframe }}</p>
+        <p>💱 Pairs: {{ ", ".join(data.pairs) }}</p>
+        <p>🕒 Server Time (EG): {{ data.time }}</p>
+    </div>
+
+    <h2>📊 Signals</h2>
+
+    {% if data.signals %}
+        <table>
+            <tr>
+                <th>Pair</th>
+                <th>Direction</th>
+                <th>Time</th>
+            </tr>
+            {% for s in data.signals %}
+            <tr>
+                <td>{{ s.pair }}</td>
+                <td>{{ s.direction }}</td>
+                <td>{{ s.time }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p class="no-signal">❌ No signals right now</p>
+    {% endif %}
+</div>
+
+</body>
+</html>
