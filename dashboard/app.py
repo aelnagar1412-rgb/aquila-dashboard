@@ -1,48 +1,56 @@
-from flask import Flask, render_template, redirect
-from datetime import datetime
+from flask import Flask, render_template, redirect, url_for, session
 import json
+from datetime import datetime
+import pytz
 
-app = Flask(
-    __name__,
-    template_folder="templates",
-    static_folder="../static"
-)
+app = Flask(__name__)
+app.secret_key = "aquila_secret_key"
 
-def load_settings():
-    with open("../settings.json", "r") as f:
-        return json.load(f)
+SETTINGS_FILE = "../settings.json"
+SIGNALS_FILE = "../data/signals.json"
+
+def load_json(path, default):
+    try:
+        with open(path, "r") as f:
+            return json.load(f)
+    except:
+        return default
 
 @app.route("/")
-def dashboard():
-    settings = load_settings()
+def home():
+    if not session.get("user"):
+        return redirect(url_for("login"))
+
+    settings = load_json(SETTINGS_FILE, {})
+    signals = load_json(SIGNALS_FILE, [])
+
+    cairo = pytz.timezone("Africa/Cairo")
+    now = datetime.now(cairo).strftime("%H:%M:%S %d-%m-%Y")
+
     return render_template(
         "dashboard.html",
-        time=datetime.now().strftime("%H:%M:%S %d-%m-%Y"),
         status=settings.get("enabled", False),
         timeframe=settings.get("timeframe", "1m"),
         pairs=settings.get("pairs", []),
-        signal=settings.get("last_signal")
+        signals=signals[-10:][::-1],
+        time=now
     )
 
-@app.route("/start")
-def start():
-    settings = load_settings()
-    settings["enabled"] = True
-    with open("../settings.json", "w") as f:
-        json.dump(settings, f, indent=4)
-    return redirect("/")
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if session.get("user"):
+        return redirect(url_for("home"))
 
-@app.route("/stop")
-def stop():
-    settings = load_settings()
-    settings["enabled"] = False
-    with open("../settings.json", "w") as f:
-        json.dump(settings, f, indent=4)
-    return redirect("/")
+    if "POST" in str(__import__("flask").request.method):
+        session["user"] = "admin"
+        return redirect(url_for("home"))
+
+    return render_template("login.html")
 
 @app.route("/logout")
 def logout():
-    return "Logged out"
+    session.clear()
+    return redirect(url_for("login"))
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
